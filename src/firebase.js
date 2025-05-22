@@ -3,6 +3,8 @@
 // Import Firebase SDK functions you need
 import { initializeApp } from 'firebase/app'
 import { getDatabase, ref, onValue, set } from 'firebase/database'
+// Firestore imports
+import { getFirestore, collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore'
 
 // Your Firebase config object (replace with your actual config)
 const firebaseConfig = {
@@ -21,6 +23,7 @@ const app = initializeApp(firebaseConfig)
 
 // Initialize Realtime Database and export it
 const db = getDatabase(app)
+const firestore = getFirestore(app)
 
 // Export the database and functions you need
-export { db, ref, onValue, set }
+export { db, ref, onValue, set, firestore, collection, addDoc, getDocs, query, orderBy}
