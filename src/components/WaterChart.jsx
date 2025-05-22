@@ -83,10 +83,6 @@ function WaterChart() {
   return (
     <div className="rounded-lg bg-gray-900 p-4 h-96 w-full">
       <div className="text-gray-300 mb-4">
-        <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
-          <h3 className="text-sm font-medium">### 350L</h3>
-        </div>
       </div>
       <div className="h-80">
         <Line data={weeklyData} options={options} />
