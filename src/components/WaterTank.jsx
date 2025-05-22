@@ -4,6 +4,7 @@ function WaterTank({ capacity, currentLevel, onLevelChange }) {
   const tankRef = useRef(null)
   const levelPercentage = (currentLevel / capacity) * 100
 
+  // Handle tank click to set new water level — currently disabled
   const handleTankClick = (e) => {
     if (!tankRef.current) return
 
@@ -15,10 +16,10 @@ function WaterTank({ capacity, currentLevel, onLevelChange }) {
     const newLevel = Math.round((clickPercent / 100) * capacity)
 
     const boundedLevel = Math.max(0, Math.min(capacity, newLevel))
-    onLevelChange(boundedLevel)
+    // onLevelChange(boundedLevel) // <- Commented out to disable clicking
   }
 
-  // Color logic
+  // Color and status logic
   let backgroundColor = '#3b82f6' // normal (blue-500)
   let status = 'Normal'
   let statusColor = 'text-blue-600'
@@ -36,10 +37,10 @@ function WaterTank({ capacity, currentLevel, onLevelChange }) {
   return (
     <div 
       ref={tankRef}
-      className="water-tank cursor-pointer relative mb-4"
-      onClick={handleTankClick}
+      className="water-tank cursor-default relative mb-4"
+      onClick={handleTankClick} // Clicking is disabled by commenting out onLevelChange
     >
-      {/* Water level */}
+      {/* Water level fill */}
       <div 
         className="water-level absolute bottom-0 left-0 w-full transition-all duration-500"
         style={{ 
@@ -52,17 +53,21 @@ function WaterTank({ capacity, currentLevel, onLevelChange }) {
         <div className="water-ripple"></div>
       </div>
 
-      {/* Level markings */}
+      {/* Dynamic level markings */}
       <div className="absolute top-0 left-0 h-full w-16 flex flex-col justify-between p-2 text-xs font-medium">
-        {[600, 500, 450, 400, 350, 300, 250, 200, 150, 100, 50, 0].map((level) => (
-          <div key={level} className="flex items-center">
-            <span className="mr-1">{level} L</span>
-            <div className="flex-1 border-t border-dashed border-blue-400" style={{ width: '100%' }}></div>
-          </div>
-        ))}
+        {Array.from({ length: 11 }, (_, i) => {
+          const step = capacity / 10
+          const level = Math.round(capacity - i * step)
+          return (
+            <div key={level} className="flex items-center">
+              <span className="mr-1">{level} L</span>
+              <div className="flex-1 border-t border-dashed border-blue-400" style={{ width: '100%' }}></div>
+            </div>
+          )
+        })}
       </div>
 
-      {/* Current level and status indicator */}
+      {/* Level + Status bubble */}
       {currentLevel > 0 && (
         <div 
           className="absolute right-4 bg-white px-2 py-1 rounded-md text-blue-600 font-bold shadow-sm flex flex-col items-end"
