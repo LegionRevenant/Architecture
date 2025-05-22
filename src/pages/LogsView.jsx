@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import WaterChart from '../components/WaterChart'
 import MobileNav from '../components/MobileNav'
+import Sidebar from '../components/Sidebar'
 
 function LogsView() {
   const [syncData, setSyncData] = useState({
@@ -10,7 +11,9 @@ function LogsView() {
   })
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="flex min-h-screen bg-gradient-to-b from-blue-50 to-blue-100">
+    <Sidebar />
+    <div className="mx-auto max-w-5xl p-4 md:p-6 overflow-auto flex-1 ">
       <MobileNav />
       
       <div className="mb-6">
@@ -76,6 +79,7 @@ function LogsView() {
         </div>
       </div>
     </div>
+  </div>
   )
 }
 

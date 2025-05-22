@@ -13,7 +13,7 @@ function Sidebar() {
         
         <nav className="mt-8 space-y-2">
           <NavLink 
-            to="/" 
+            to="/dashboard" 
             className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}
             end
           >

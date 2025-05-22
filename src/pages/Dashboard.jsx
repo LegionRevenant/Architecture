@@ -3,6 +3,7 @@ import WaterTank from '../components/WaterTank'
 import StatsCard from '../components/StatsCard'
 import MobileNav from '../components/MobileNav'
 import SettingsOverlay from '../components/SettingsOverlay'
+import Sidebar from '../components/Sidebar'
 
 function Dashboard({ tankData, updateTankLevel }) {
   const { maxCapacity, currentLevel, temperature, drainageRate, dailyUsage, monthlyUsage } = tankData
@@ -17,7 +18,9 @@ function Dashboard({ tankData, updateTankLevel }) {
   })
 
   return (
-    <div className="max-w-5xl mx-auto relative">
+    <div className="flex min-h-screen bg-gradient-to-b from-blue-50 to-blue-100">
+      <Sidebar />
+    <div className="mx-auto max-w-5xl p-4 md:p-6 overflow-auto flex-1 ">
       <MobileNav />
       
       <div className="flex flex-col lg:flex-row gap-6">
@@ -90,6 +93,7 @@ function Dashboard({ tankData, updateTankLevel }) {
         onClose={() => setShowSettings(false)}
         initialSettings={settings}
       />
+    </div>
     </div>
   )
 }
