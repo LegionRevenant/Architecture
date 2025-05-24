@@ -4,7 +4,9 @@
 import { initializeApp } from 'firebase/app'
 import { getDatabase, ref, onValue, set } from 'firebase/database'
 // Firestore imports
-import { getFirestore, collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore'
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, setDoc, getDoc, increment, where, Timestamp } from 'firebase/firestore'
+// Firebase Auth
+import { getAuth,signInWithEmailAndPassword } from 'firebase/auth'
 
 // Your Firebase config object (replace with your actual config)
 const firebaseConfig = {
@@ -25,5 +27,7 @@ const app = initializeApp(firebaseConfig)
 const db = getDatabase(app)
 const firestore = getFirestore(app)
 
+// ✅ Initialize and export Firebase Auth
+const auth = getAuth(app)
 // Export the database and functions you need
-export { db, ref, onValue, set, firestore, collection, addDoc, getDocs, query, orderBy}
+export { db, ref, onValue, set, firestore, collection, addDoc, getDocs, query, orderBy, doc, setDoc, getDoc, increment, where, Timestamp, signInWithEmailAndPassword, auth }
