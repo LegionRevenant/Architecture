@@ -27,7 +27,7 @@ function MobileNav() {
           
           <nav className="flex flex-col p-4 space-y-4">
             <NavLink 
-              to="/" 
+              to="/dashboard" 
               className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}
               onClick={() => setIsOpen(false)}
               end
