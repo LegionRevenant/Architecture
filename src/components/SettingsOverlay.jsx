@@ -31,7 +31,7 @@ function SettingsOverlay({ isOpen, onClose, initialSettings, onSave }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 max-w-xl w-full overflow-y-auto max-h-[90vh]">
+      <div className="bg-gradient-to-l from-blue-200 to-sky-300 rounded-lg shadow-xl p-6 max-w-xl w-full overflow-y-auto max-h-[90vh]">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-800">Settings</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">

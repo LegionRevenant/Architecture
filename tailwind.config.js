@@ -20,6 +20,9 @@ export default {
           900: '#0c4a6e',
         }
       },
+      fontFamily: {
+        sans: ['Poppins', 'sans-serif'],
+      },
       animation: {
         'water-flow': 'flow 3s ease-in-out infinite',
       },
