@@ -168,10 +168,10 @@ function LogsView() {
   });
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-b from-blue-50 to-blue-100">
+    <div className="flex min-h-screen bg-gradient-to-b from-blue-100 to-blue-300">
       <Sidebar />
 
-      <div className="mx-auto max-w-5xl p-4 md:p-6 overflow-auto flex-1">
+      <div className="mx-auto max-w-full p-4 md:p-6 overflow-auto flex-1">
         <MobileNav />
 
         {/* Weekly Usage Chart */}
@@ -205,7 +205,7 @@ function LogsView() {
         </div>
 
         {/* Add Log Entry Form */}
-        <div className="mt-8 bg-white p-6 rounded shadow-md max-w-md">
+        <div className="mt-8 bg-white p-6 rounded shadow-md max-w-full">
           <h3 className="text-xl font-semibold mb-4">Add Log Entry</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <label className="block">

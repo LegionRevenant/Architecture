@@ -111,12 +111,12 @@ function Dashboard() {
   const { maxCapacity, currentLevel, temperature } = tankData
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-b from-blue-50 to-blue-100">
+     <div className="flex min-h-screen bg-gradient-to-b from-blue-100 to-blue-300">
       <Sidebar />
-
-      <div className="flex-1 mx-auto max-w-5xl p-4 md:p-6 overflow-auto">
+      
+      <div className="flex-auto mx-auto max-w-7xl p-4 md:p-6 overflow-auto">
         <MobileNav />
-
+          
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold text-gray-800">Water Level</h2>
           <button
@@ -160,7 +160,7 @@ function Dashboard() {
             </div>
           </div>
         </div>
-
+        
         <SettingsOverlay
           isOpen={showSettings}
           onClose={() => setShowSettings(false)}

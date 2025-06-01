@@ -1,5 +1,3 @@
-// src/pages/LoginPage.jsx
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -25,6 +23,10 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-cover bg-center">
+       <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute w-full h-full bg-[url('src/assets/Bgimage.jpg')] bg-cover bg-center opacity-90" />
+        <div className="absolute inset-0 bg-blue-900/50 backdrop-blur-sm" />  
+      </div>
       <div className="bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-blue-900">AQUA ALIGNED</h1>
