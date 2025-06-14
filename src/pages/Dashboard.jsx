@@ -1,22 +1,7 @@
 import { useState, useEffect } from 'react'
-import { ref, onValue, set } from 'firebase/database'
-import { db, firestore } from '../firebase'
 import {
-  collection,
-  getDocs,
-  query,
-  where
-} from 'firebase/firestore'
-import {
-  startOfDay,
-  endOfDay,
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  format,
-  isWithinInterval,
-  parseISO
+  startOfWeek, endOfWeek, startOfMonth, endOfMonth,
+  format, isWithinInterval, parseISO
 } from 'date-fns'
 
 import WaterTank from '../components/WaterTank'
@@ -27,120 +12,145 @@ import Sidebar from '../components/Sidebar'
 
 function Dashboard() {
   const [tankData, setTankData] = useState({
-    maxCapacity: 500,
     currentLevel: 0,
-    temperature: 0,
-    drainageRate: 0,
+    temperature: 24
   })
 
-  const [totalDailyUsage, setTotalDailyUsage] = useState(0)
-  const [totalWeeklyUsage, setTotalWeeklyUsage] = useState(0)
-  const [totalMonthlyUsage, setTotalMonthlyUsage] = useState(0)
-  const [showSettings, setShowSettings] = useState(false)
   const [settings, setSettings] = useState({
     thresholdType: 'percentage',
     thresholdValue: 20,
-    tankCapacity: 500,
-    notificationsEnabled: true,
-    dataSync: true
+    tankShape: 'rectangular',
+    dimensions: {
+      length: 16.5,
+      width: 12,
+      height: 15,
+      diameter: 12
+    },
+    notificationsEnabled: true
   })
 
-  // Fetch real-time tank data
-  useEffect(() => {
-    const tankRef = ref(db, 'tankData')
-    const unsubscribe = onValue(tankRef, (snapshot) => {
-      const data = snapshot.val()
-      if (data) {
-        const { dailyUsage, monthlyUsage, ...rest } = data
-        setTankData(rest)
-      }
-    })
-    return () => unsubscribe()
-  }, [])
+  const [showSettings, setShowSettings] = useState(false)
+  const [usage, setUsage] = useState({ daily: 0, weekly: 0, monthly: 0 })
 
-  // Fetch usage from daily_usage
-  useEffect(() => {
-    async function fetchUsageFromDailyDocs() {
-      const usageRef = collection(firestore, 'daily_usage')
-      const snapshot = await getDocs(usageRef)
-      const allDocs = snapshot.docs.map(doc => doc.data())
-
-      const now = new Date()
-      const todayStr = format(now, 'yyyy-MM-dd')
-
-      const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday start
-      const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-
-      const monthStart = startOfMonth(now)
-      const monthEnd = endOfMonth(now)
-
-      let daily = 0
-      let weekly = 0
-      let monthly = 0
-
-      allDocs.forEach(doc => {
-        const date = parseISO(doc.date)
-        const usage = Number(doc.totalUsage || 0)
-
-        if (doc.date === todayStr) {
-          daily += usage
-        }
-        if (isWithinInterval(date, { start: weekStart, end: weekEnd })) {
-          weekly += usage
-        }
-        if (isWithinInterval(date, { start: monthStart, end: monthEnd })) {
-          monthly += usage
-        }
-      })
-
-      setTotalDailyUsage(daily)
-      setTotalWeeklyUsage(weekly)
-      setTotalMonthlyUsage(monthly)
+  const computeMaxCapacity = () => {
+    const { height, width, length, diameter } = settings.dimensions
+    if (settings.tankShape === 'rectangular') {
+      return (height * width * length) / 1000
+    } else {
+      const radius = diameter / 2
+      return (Math.PI * radius * radius * height) / 1000
     }
-
-    fetchUsageFromDailyDocs()
-  }, [])
-
-  const updateTankLevel = (newLevel) => {
-    const tankRef = ref(db, 'tankData/currentLevel')
-    set(tankRef, newLevel).catch((error) => {
-      console.error('Failed to update tank level:', error)
-    })
   }
 
-  const { maxCapacity, currentLevel, temperature } = tankData
+  const maxCapacity = Math.round(computeMaxCapacity())
+
+  useEffect(() => {
+    const fetchSensorData = async () => {
+      try {
+        const res = await fetch('/api/sensor-data')
+        const data = await res.json()
+        if (Array.isArray(data) && data.length > 0) {
+          const { temperature, distance_cm } = data[0]
+          const filledHeight = Math.max(0, settings.dimensions.height - distance_cm)
+
+          let volumeCm3 = 0
+          if (settings.tankShape === 'rectangular') {
+            const { width, length } = settings.dimensions
+            volumeCm3 = filledHeight * width * length
+          } else {
+            const r = settings.dimensions.diameter / 2
+            volumeCm3 = Math.PI * r * r * filledHeight
+          }
+
+          const volumeL = volumeCm3 / 1000
+
+          setTankData({
+            temperature: parseFloat(temperature).toFixed(1),
+            currentLevel: parseFloat(volumeL.toFixed(2))
+          })
+        }
+      } catch (err) {
+        console.error('Sensor error:', err)
+      }
+    }
+
+    fetchSensorData()
+    const interval = setInterval(fetchSensorData, 2000)
+    return () => clearInterval(interval)
+  }, [settings])
+
+  useEffect(() => {
+  const fetchUsage = async () => {
+    try {
+      const res = await fetch('/api/logs');
+      const data = await res.json();
+
+      const now = new Date();
+      const todayStr = format(now, 'yyyy-MM-dd');
+      const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+      const monthStart = startOfMonth(now);
+      const monthEnd = endOfMonth(now);
+
+      let daily = 0, weekly = 0, monthly = 0;
+
+      data.forEach(log => {
+        if (log.activityType !== 'Usage') return;
+
+        const usageAmount = Number(log.amount || 0);
+        const logDateStr = format(parseISO(log.date), 'yyyy-MM-dd');
+
+        if (logDateStr === todayStr) daily += usageAmount;
+        if (isWithinInterval(parseISO(log.date), { start: weekStart, end: weekEnd })) weekly += usageAmount;
+        if (isWithinInterval(parseISO(log.date), { start: monthStart, end: monthEnd })) monthly += usageAmount;
+      });
+
+      setUsage({ daily, weekly, monthly });
+    } catch (err) {
+      console.error('Usage fetch error:', err);
+    }
+  };
+
+  fetchUsage();
+}, []);
+
+
+  const levelPercent = (tankData.currentLevel / maxCapacity) * 100
+  const isBelowThreshold = settings.thresholdType === 'percentage'
+    ? levelPercent < settings.thresholdValue
+    : tankData.currentLevel < settings.thresholdValue
 
   return (
-     <div className="flex min-h-screen bg-gradient-to-b from-blue-100 to-blue-300">
+    <div className="flex min-h-screen bg-gradient-to-b from-blue-100 to-blue-300">
       <Sidebar />
-      
       <div className="flex-auto mx-auto max-w-7xl p-4 md:p-6 overflow-auto">
         <MobileNav />
-          
+
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold text-gray-800">Water Level</h2>
           <button
-            className="p-2 rounded-full hover:bg-blue-100 transition-colors"
-            onClick={() => setShowSettings(!showSettings)}
-            aria-label="Settings"
+            className="p-2 rounded-full hover:bg-blue-100"
+            onClick={() => setShowSettings(true)}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.142-.854-.108-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.806.272 1.203.107.397-.165.71-.505.781-.929l.149-.894z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            Settings
           </button>
         </div>
 
+        {isBelowThreshold && (
+          <div className="mb-4 p-3 rounded bg-red-100 text-red-700 font-medium border border-red-300">
+            Alert: Water level is below your configured threshold.
+          </div>
+        )}
+
         <WaterTank
           capacity={maxCapacity}
-          currentLevel={currentLevel}
-          onLevelChange={updateTankLevel}
+          currentLevel={tankData.currentLevel}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <StatsCard title="Max Capacity" value={maxCapacity} unit="L" />
-          <StatsCard title="Current Level" value={currentLevel} unit="L" />
-          <StatsCard title="Temperature" value={temperature} unit="°C" />
+          <StatsCard title="Current Level" value={tankData.currentLevel} unit="L" />
+          <StatsCard title="Temperature" value={tankData.temperature} unit="°C" />
         </div>
 
         <div className="mt-8">
@@ -148,23 +158,24 @@ function Dashboard() {
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-white rounded-lg shadow p-4">
               <h4 className="text-lg font-medium">Daily</h4>
-              <p className="text-2xl font-bold">{totalDailyUsage} L</p>
+              <p className="text-2xl font-bold">{usage.daily} L</p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <h4 className="text-lg font-medium">Weekly</h4>
-              <p className="text-2xl font-bold">{totalWeeklyUsage} L</p>
+              <p className="text-2xl font-bold">{usage.weekly} L</p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <h4 className="text-lg font-medium">Monthly</h4>
-              <p className="text-2xl font-bold">{totalMonthlyUsage} L</p>
+              <p className="text-2xl font-bold">{usage.monthly} L</p>
             </div>
           </div>
         </div>
-        
+
         <SettingsOverlay
           isOpen={showSettings}
           onClose={() => setShowSettings(false)}
           initialSettings={settings}
+          onSave={(newSettings) => setSettings({ ...newSettings })}
         />
       </div>
     </div>
