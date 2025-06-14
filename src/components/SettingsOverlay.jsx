@@ -7,19 +7,20 @@ function SettingsOverlay({ isOpen, onClose, initialSettings, onSave }) {
     setSettings(initialSettings)
   }, [initialSettings])
 
-  const handleSettingChange = (e) => {
+  const handleChange = (e) => {
     const { name, value, type, checked } = e.target
-    setSettings(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : Number(value)
-    }))
-  }
-
-  const handleRadioChange = (e) => {
-    setSettings(prev => ({
-      ...prev,
-      thresholdType: e.target.value
-    }))
+    if (name.startsWith('dimensions.')) {
+      const key = name.split('.')[1]
+      setSettings(prev => ({
+        ...prev,
+        dimensions: { ...prev.dimensions, [key]: Number(value) }
+      }))
+    } else {
+      setSettings(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }))
+    }
   }
 
   const handleSave = () => {
@@ -30,74 +31,113 @@ function SettingsOverlay({ isOpen, onClose, initialSettings, onSave }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gradient-to-l from-blue-200 to-sky-300 rounded-lg shadow-xl p-6 max-w-xl w-full overflow-y-auto max-h-[90vh]">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-gray-800">Settings</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
-            ✕
-          </button>
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-xl">
+        <div className="flex justify-between mb-4">
+          <h2 className="text-xl font-bold">Settings</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-black">✕</button>
         </div>
 
-        <div className="space-y-6">
-          {/* Threshold Alerts */}
-          <div>
-            <h3 className="text-xl font-semibold mb-4">Threshold Alerts</h3>
-            <div className="flex gap-6 mb-4">
-              <label>
-                <input
-                  type="radio"
-                  value="percentage"
-                  checked={settings.thresholdType === 'percentage'}
-                  onChange={handleRadioChange}
-                /> Percentage
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  value="liters"
-                  checked={settings.thresholdType === 'liters'}
-                  onChange={handleRadioChange}
-                /> Liters
-              </label>
-            </div>
-            <input
-              type="range"
-              min={settings.thresholdType === 'percentage' ? 5 : 25}
-              max={settings.thresholdType === 'percentage' ? 50 : 250}
-              step={settings.thresholdType === 'percentage' ? 5 : 25}
-              name="thresholdValue"
-              value={settings.thresholdValue}
-              onChange={handleSettingChange}
-              className="w-full"
-            />
-            <p className="mt-2 text-blue-600 font-medium">
-              Alert below: {settings.thresholdValue}{settings.thresholdType === 'percentage' ? '%' : 'L'}
-            </p>
+        {/* Alert Threshold */}
+        <div className="mb-4">
+          <h3 className="font-semibold">Alert Threshold</h3>
+          <div className="flex gap-4 mt-2">
+            <label><input type="radio" name="thresholdType" value="percentage" checked={settings.thresholdType === 'percentage'} onChange={handleChange} /> %</label>
+            <label><input type="radio" name="thresholdType" value="liters" checked={settings.thresholdType === 'liters'} onChange={handleChange} /> L</label>
           </div>
+          <input
+            type="range"
+            name="thresholdValue"
+            min={settings.thresholdType === 'percentage' ? 5 : 1}
+            max={settings.thresholdType === 'percentage' ? 50 : 10}
+            step={settings.thresholdType === 'percentage' ? 1 : 0.5}
+            value={settings.thresholdValue}
+            onChange={handleChange}
+            className="w-full mt-2"
+          />
+          <p className="text-sm text-blue-700 mt-1">
+            Alert if below: {settings.thresholdValue}{settings.thresholdType === 'percentage' ? '%' : 'L'}
+          </p>
+        </div>
 
-          {/* Tank Capacity */}
+        {/* Tank Shape */}
+        <div className="mb-4">
+          <h3 className="font-semibold">Tank Shape</h3>
+          <select
+            name="tankShape"
+            value={settings.tankShape}
+            onChange={handleChange}
+            className="mt-1 w-full border px-3 py-2 rounded"
+          >
+            <option value="rectangular">Rectangular</option>
+            <option value="cylindrical">Cylindrical</option>
+          </select>
+        </div>
+
+        {/* Dimensions */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          {settings.tankShape === 'rectangular' && (
+            <>
+              <div>
+                <label htmlFor="length" className="block mb-1 font-semibold">Length (cm)</label>
+                <input
+                  id="length"
+                  name="dimensions.length"
+                  type="number"
+                  value={settings.dimensions.length}
+                  onChange={handleChange}
+                  className="border px-3 py-2 rounded w-full"
+                />
+              </div>
+              <div>
+                <label htmlFor="width" className="block mb-1 font-semibold">Width (cm)</label>
+                <input
+                  id="width"
+                  name="dimensions.width"
+                  type="number"
+                  value={settings.dimensions.width}
+                  onChange={handleChange}
+                  className="border px-3 py-2 rounded w-full"
+                />
+              </div>
+            </>
+          )}
+
           <div>
-            <h3 className="text-xl font-semibold mb-4">Tank Capacity</h3>
+            <label htmlFor="height" className="block mb-1 font-semibold">Height (cm)</label>
             <input
+              id="height"
+              name="dimensions.height"
               type="number"
-              name="tankCapacity"
-              value={settings.tankCapacity}
-              onChange={handleSettingChange}
-              min={100}
-              max={1000}
-              className="w-full border px-4 py-2 rounded"
+              value={settings.dimensions.height}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded w-full"
             />
           </div>
 
-          <div className="text-right pt-4">
-            <button
-              onClick={handleSave}
-              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Save Changes
-            </button>
-          </div>
+          {settings.tankShape === 'cylindrical' && (
+            <div>
+              <label htmlFor="diameter" className="block mb-1 font-semibold">Diameter (cm)</label>
+              <input
+                id="diameter"
+                name="dimensions.diameter"
+                type="number"
+                value={settings.dimensions.diameter}
+                onChange={handleChange}
+                className="border px-3 py-2 rounded w-full"
+              />
+            </div>
+          )}
+        </div>
+
+
+        <div className="text-right">
+          <button
+            onClick={handleSave}
+            className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700"
+          >
+            Save
+          </button>
         </div>
       </div>
     </div>
