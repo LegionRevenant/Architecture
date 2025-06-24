@@ -25,12 +25,17 @@ export default {
       },
       animation: {
         'water-flow': 'flow 3s ease-in-out infinite',
+        'flash-bg': 'flash-bg 1s steps(2, start) infinite',
       },
       keyframes: {
         flow: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-5px)' },
-        }
+        },
+        'flash-bg': {
+          '0%, 100%': { backgroundColor: '#dc2626' },
+          '50%': { backgroundColor: '#b91c1c' },     
+        },
       }
     },
   },
