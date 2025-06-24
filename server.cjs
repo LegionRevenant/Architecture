@@ -183,3 +183,67 @@ app.get('/sensor-data', (req, res) => {
     res.json(results);
   });
 });
+
+app.get('/tank-settings', (req, res) => {
+  db.query('SELECT * FROM tankdata ORDER BY id DESC LIMIT 1', (err, results) => {
+    if (err) return res.status(500).json({ error: 'Failed to fetch tank settings.' });
+    
+    if (!results[0]) return res.status(404).json({ error: 'No tank settings found.' });
+
+    const row = results[0];
+
+    // Normalize keys
+    res.json({
+      tankShape: row.type,
+      height: row.height,
+      width: row.width,
+      length: row.length,
+      diameter: row.diameter,
+      thresholdType: row.threshold_type,
+      thresholdValue: row.threshold_value,
+      notificationsEnabled: !!row.notifications_enabled  
+    });
+  });
+});
+
+
+
+app.post('/tank-settings', (req, res) => {
+  const {
+  thresholdType,
+  thresholdValue,
+  tankShape,
+  dimensions,
+  notificationsEnabled,
+  } = req.body
+
+const { height, width, length, diameter } = dimensions
+
+
+  const query = `
+    UPDATE tankdata
+  SET
+    type = ?,
+    height = ?,
+    width = ?,
+    length = ?,
+    diameter = ?,
+    threshold_type = ?,
+    threshold_value = ?,
+    notifications_enabled = ?,
+    updated_at = NOW()
+  WHERE id = 1
+  `;
+
+  db.query(
+    query,
+    [tankShape, height, width, length, diameter, thresholdType, thresholdValue, notificationsEnabled],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: 'Failed to update tank settings.' });
+      res.status(200).json({ message: 'Tank settings updated.' });
+    }
+  );
+});
+
+
+
